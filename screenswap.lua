@@ -1,4 +1,6 @@
 scriptId = 'com.anotherlizwong.first.screenswap'
+scriptTitle = "Screen Swapper"
+scriptDetailsUrl = "https://github.com/anotherlizwong/MyoScripts"
 
 locked = true
 unlockedSince = 0
@@ -24,35 +26,25 @@ function onPoseEdge(pose, edge)
 	myo.debug("onPoseEdge: " .. pose)
 	pose = conditionallySwapWave(pose)
 	if (edge == "on") then
-		if (pose == "thumbToPinky") then
-			toggleLock()
-		elseif (not locked and pose == "fingersSpread") then
+		if pose == "fingersSpread" then
 			onFingersSpread()
-		elseif (not locked and popupOpen()) then
-			if (pose == "waveOut") then
-				onWaveOut()
+			elseif popupOpen() then
+				if (pose == "waveOut") then
+					onWaveOut()
 			elseif (pose == "waveIn") then
 				onWaveIn()
-			elseif (pose == "fist") then
-				onFist()
-			end
-		elseif (not locked and pose == "rest" and not popupOpen()) then
-			myo.debug("Dismiss alt button")
-			myo.keyboard("left_alt","up")
-		end
+				elseif (pose == "fist") then
+					onFist()
+				end
+	--Extend unlock and notify user
+	myo.unlock("hold")
+	myo.notifyUserAction()
+	elseif pose == "rest" and not popupOpen() then
+		myo.debug("Dismiss alt button")
+		myo.keyboard("left_alt","up")
 	end
-end
-
-function toggleLock()
-	locked = not locked
-	myo.vibrate("short")
-	if (not locked) then
-		-- Vibrate twice on unlock
-		unlockedSince = myo.getTimeMilliseconds()
-		myo.debug("Unlocked")
-		myo.vibrate("short")
-	else
-		myo.debug("Locked")
+	elseif edge =="off" then
+		myo.unlock("timed")
 	end
 end
 
@@ -87,24 +79,4 @@ function conditionallySwapWave(pose)
 		end
 	end
 	return pose
-end
-
-
--- All timeouts in milliseconds.
--- Time since last activity before we lock
-UNLOCKED_TIMEOUT = 22000
-
-function onPeriodic()
-    local now = myo.getTimeMilliseconds()
-    -- Lock after inactivity
-    if not locked then
-        -- If we've been unlocked longer than the timeout period, lock.
-        -- Activity will update unlockedSince, see extendUnlock() above.
-        local timeSince = myo.getTimeMilliseconds() - unlockedSince
-        if timeSince > UNLOCKED_TIMEOUT then
-            locked = true
-			myo.vibrate("short")
-            myo.debug("lock due to inactivity:  "..timeSince)
-        end
-    end
 end
